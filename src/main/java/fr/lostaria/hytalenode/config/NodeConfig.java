@@ -8,8 +8,14 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NodeConfig {
+
     private boolean enable;
+
     private String managerUrl;
-    private String managerToken;
+
+    private String authUrl;
+
+    private String deviceToken;
+
     private String currentHostIp;
 }

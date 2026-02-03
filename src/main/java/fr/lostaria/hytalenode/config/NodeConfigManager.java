@@ -58,7 +58,8 @@ public class NodeConfigManager {
             NodeConfig cfg = mapper.readValue(in, NodeConfig.class);
 
             if (cfg.getManagerUrl() == null) cfg.setManagerUrl("");
-            if (cfg.getManagerToken() == null) cfg.setManagerToken("");
+            if (cfg.getAuthUrl() == null) cfg.setAuthUrl("");
+            if (cfg.getDeviceToken() == null) cfg.setDeviceToken("");
             if (cfg.getCurrentHostIp() == null) cfg.setCurrentHostIp("127.0.0.1");
 
             return cfg;

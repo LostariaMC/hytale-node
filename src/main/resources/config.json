@@ -1,0 +1,7 @@
+{
+  "enable": false,
+  "managerUrl": "https://manager.example.com",
+  "authUrl": "https://auth.example.com",
+  "deviceToken": "/etc/hytalenode/device.token",
+  "currentHostIp": "127.0.0.1"
+}

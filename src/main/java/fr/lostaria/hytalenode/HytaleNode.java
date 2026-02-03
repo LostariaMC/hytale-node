@@ -20,8 +20,8 @@ public class HytaleNode {
             return;
         }
 
-        if (config.getManagerUrl().isBlank() || config.getManagerToken().isBlank()) {
-            LOGGER.error("STATUS=ERROR Missing managerUrl or managerToken in config. Fix config.json.");
+        if (config.getManagerUrl().isBlank() || config.getAuthUrl().isBlank() || config.getDeviceToken().isBlank()) {
+            LOGGER.error("STATUS=ERROR Missing managerUrl or authUrl or deviceToken in config. Fix config.json.");
             return;
         }
 
