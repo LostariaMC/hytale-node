@@ -3,5 +3,7 @@
   "managerUrl": "https://manager.example.com",
   "authUrl": "https://auth.example.com",
   "deviceToken": "/etc/hytalenode/device.token",
-  "currentHostIp": "127.0.0.1"
+  "currentHostIp": "127.0.0.1",
+  "portRangeStart": 5521,
+  "portRangeEnd": 5699
 }

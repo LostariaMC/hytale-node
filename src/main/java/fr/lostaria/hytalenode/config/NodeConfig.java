@@ -10,12 +10,11 @@ import lombok.Setter;
 public class NodeConfig {
 
     private boolean enable;
-
     private String managerUrl;
-
     private String authUrl;
-
     private String deviceToken;
-
     private String currentHostIp;
+    private int portRangeStart;
+    private int portRangeEnd;
+
 }

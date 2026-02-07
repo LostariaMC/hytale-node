@@ -47,9 +47,24 @@ public class NodeRunner implements Runnable {
                 }
             }, 55, 55, TimeUnit.MINUTES);
 
-            var node = managerClient.register(new RegisterNodeRequest(config.getCurrentHostIp()), jwt);
+            var node = managerClient.register(
+                    new RegisterNodeRequest(
+                            config.getCurrentHostIp(),
+                            config.getPortRangeStart(),
+                            config.getPortRangeEnd()
+                    ),
+                    jwt
+            );
+
             this.nodeId = node.id();
-            LOGGER.info("REGISTERED nodeId={} nodeIp={}", nodeId, node.ip());
+
+            LOGGER.info(
+                    "REGISTERED nodeId={} ip={} portStart={} portEnd={}",
+                    nodeId,
+                    node.ip(),
+                    node.portRangeStart(),
+                    node.portRangeEnd()
+            );
 
             long backoffMs = 250;
             int timeout = clamp(25, 1, 30);
