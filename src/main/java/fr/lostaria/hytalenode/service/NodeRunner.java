@@ -49,7 +49,7 @@ public class NodeRunner implements Runnable {
 
             var node = managerClient.register(new RegisterNodeRequest(config.getCurrentHostIp()), jwt);
             this.nodeId = node.id();
-            LOGGER.info("REGISTERED nodeId={} publicIp={}", nodeId, node.publicIp());
+            LOGGER.info("REGISTERED nodeId={} nodeIp={}", nodeId, node.ip());
 
             long backoffMs = 250;
             int timeout = clamp(25, 1, 30);
