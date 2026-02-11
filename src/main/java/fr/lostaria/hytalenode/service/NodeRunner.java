@@ -3,6 +3,8 @@ package fr.lostaria.hytalenode.service;
 import fr.lostaria.hytalenode.config.NodeConfig;
 import fr.lostaria.hytalenode.http.AuthClient;
 import fr.lostaria.hytalenode.http.ManagerClient;
+import fr.lostaria.hytalenode.http.PubsubClient;
+import fr.lostaria.hytalenode.http.UnauthorizedException;
 import fr.lostaria.hytalenode.model.RegisterNodeRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static fr.lostaria.hytalenode.utils.HttpUtils.clamp;
+
 public class NodeRunner implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeRunner.class);
@@ -18,6 +22,7 @@ public class NodeRunner implements Runnable {
     private final NodeConfig config;
     private final AuthClient authClient;
     private final ManagerClient managerClient;
+    private final PubsubClient pubsubClient;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "jwt-refresher");
@@ -27,11 +32,13 @@ public class NodeRunner implements Runnable {
 
     private volatile String jwt;
     private volatile String nodeId;
+    private volatile String consumer;
 
     public NodeRunner(NodeConfig config) {
         this.config = config;
         this.authClient = new AuthClient(config.getAuthUrl(), config.getDeviceToken());
         this.managerClient = new ManagerClient(config.getManagerUrl());
+        this.pubsubClient = new PubsubClient(config.getPubsubUrl());
     }
 
     @Override
@@ -57,10 +64,12 @@ public class NodeRunner implements Runnable {
             );
 
             this.nodeId = node.id();
+            this.consumer = "node-" + nodeId;
 
             LOGGER.info(
-                    "REGISTERED nodeId={} ip={} portStart={} portEnd={}",
+                    "REGISTERED nodeId={} consumer={} ip={} portStart={} portEnd={}",
                     nodeId,
+                    consumer,
                     node.ip(),
                     node.portRangeStart(),
                     node.portRangeEnd()
@@ -71,14 +80,14 @@ public class NodeRunner implements Runnable {
 
             while (true) {
                 try {
-                    String msg = managerClient.pollMessage(nodeId, timeout, jwt);
+                    var msg = pubsubClient.pollMessage(consumer, timeout, jwt);
                     if (msg != null) {
                         LOGGER.info("MESSAGE: {}", msg);
                     }
                     backoffMs = 250;
 
-                } catch (ManagerClient.UnauthorizedException e) {
-                    LOGGER.warn("Unauthorized from manager, refreshing JWT...");
+                } catch (UnauthorizedException e) {
+                    LOGGER.warn("Unauthorized, refreshing JWT...");
                     try {
                         refreshJwtOrThrow();
                     } catch (Exception refreshErr) {
@@ -105,10 +114,6 @@ public class NodeRunner implements Runnable {
         String newJwt = authClient.fetchJwt();
         this.jwt = newJwt;
         LOGGER.info("JWT refreshed.");
-    }
-
-    private static int clamp(int v, int min, int max) {
-        return Math.max(min, Math.min(max, v));
     }
 
     private static void sleep(long ms) {

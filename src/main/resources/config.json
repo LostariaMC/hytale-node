@@ -2,6 +2,7 @@
   "enable": false,
   "managerUrl": "https://manager.example.com",
   "authUrl": "https://auth.example.com",
+  "pubsubUrl": "https://pubsub.example.com",
   "deviceToken": "/etc/hytalenode/device.token",
   "currentHostIp": "127.0.0.1",
   "portRangeStart": 5521,

@@ -59,6 +59,7 @@ public class NodeConfigManager {
 
             if (cfg.getManagerUrl() == null) cfg.setManagerUrl("");
             if (cfg.getAuthUrl() == null) cfg.setAuthUrl("");
+            if (cfg.getPubsubUrl() == null) cfg.setPubsubUrl("");
             if (cfg.getDeviceToken() == null) cfg.setDeviceToken("");
             if (cfg.getCurrentHostIp() == null) cfg.setCurrentHostIp("127.0.0.1");
 
