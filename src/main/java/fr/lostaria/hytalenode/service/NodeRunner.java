@@ -6,9 +6,13 @@ import fr.lostaria.hytalenode.http.ManagerClient;
 import fr.lostaria.hytalenode.http.PubsubClient;
 import fr.lostaria.hytalenode.http.UnauthorizedException;
 import fr.lostaria.hytalenode.model.RegisterNodeRequest;
+import fr.lostaria.hytalenode.service.command.CreateServerHandler;
+import fr.lostaria.hytalenode.service.command.DeleteServerHandler;
+import fr.lostaria.hytalenode.service.command.MessageRouter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +79,13 @@ public class NodeRunner implements Runnable {
                     node.portRangeEnd()
             );
 
+            var router = new MessageRouter(
+                    List.of(
+                            new CreateServerHandler(),
+                            new DeleteServerHandler()
+                    )
+            );
+
             long backoffMs = 250;
             int timeout = clamp(25, 1, 30);
 
@@ -82,7 +93,8 @@ public class NodeRunner implements Runnable {
                 try {
                     var msg = pubsubClient.pollMessage(consumer, timeout, jwt);
                     if (msg != null) {
-                        LOGGER.info("MESSAGE: {}", msg);
+                        LOGGER.info("MESSAGE type={} producer={}", msg.type(), msg.producer());
+                        router.route(msg);
                     }
                     backoffMs = 250;
 
