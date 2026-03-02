@@ -2,6 +2,7 @@ package fr.lostaria.hytalenode.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,31 +13,31 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-public class NodeConfigManager {
+public class ConfigManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NodeConfigManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
 
     private static final String CONFIG_FILE_NAME = "config.json";
     private static final String RESOURCE_DEFAULT_CONFIG = "/config.json";
 
+    @Getter
+    private Config config;
+
     private final ObjectMapper mapper;
 
-    public NodeConfigManager() {
+    public ConfigManager() {
         this.mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
     }
 
-    public Path configPath() {
-        return Paths.get(CONFIG_FILE_NAME).toAbsolutePath();
-    }
-
-    public NodeConfig loadOrCreate() {
+    public Config loadOrCreate() {
         Path path = configPath();
 
         if (Files.notExists(path)) {
             createFromResources(path);
         }
 
-        return read(path);
+        config = read(path);
+        return config;
     }
 
     private void createFromResources(Path targetPath) {
@@ -53,9 +54,9 @@ public class NodeConfigManager {
         }
     }
 
-    private NodeConfig read(Path path) {
+    private Config read(Path path) {
         try (InputStream in = Files.newInputStream(path)) {
-            NodeConfig cfg = mapper.readValue(in, NodeConfig.class);
+            Config cfg = mapper.readValue(in, Config.class);
 
             if (cfg.getManagerUrl() == null) cfg.setManagerUrl("");
             if (cfg.getAuthUrl() == null) cfg.setAuthUrl("");
@@ -67,6 +68,10 @@ public class NodeConfigManager {
         } catch (IOException e) {
             throw new RuntimeException("Failed to read config file: " + path + " : " + e.getMessage(), e);
         }
+    }
+
+    public Path configPath() {
+        return Paths.get(CONFIG_FILE_NAME).toAbsolutePath();
     }
 
 }

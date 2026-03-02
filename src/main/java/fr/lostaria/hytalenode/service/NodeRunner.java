@@ -1,6 +1,6 @@
 package fr.lostaria.hytalenode.service;
 
-import fr.lostaria.hytalenode.config.NodeConfig;
+import fr.lostaria.hytalenode.config.Config;
 import fr.lostaria.hytalenode.http.AuthClient;
 import fr.lostaria.hytalenode.http.ManagerClient;
 import fr.lostaria.hytalenode.http.PubsubClient;
@@ -23,7 +23,7 @@ public class NodeRunner implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeRunner.class);
 
-    private final NodeConfig config;
+    private final Config config;
     private final AuthClient authClient;
     private final ManagerClient managerClient;
     private final PubsubClient pubsubClient;
@@ -38,7 +38,7 @@ public class NodeRunner implements Runnable {
     private volatile String nodeId;
     private volatile String consumer;
 
-    public NodeRunner(NodeConfig config) {
+    public NodeRunner(Config config) {
         this.config = config;
         this.authClient = new AuthClient(config.getAuthUrl(), config.getDeviceToken());
         this.managerClient = new ManagerClient(config.getManagerUrl());
@@ -81,7 +81,7 @@ public class NodeRunner implements Runnable {
 
             var router = new MessageRouter(
                     List.of(
-                            new CreateServerHandler(),
+                            new CreateServerHandler(config),
                             new DeleteServerHandler()
                     )
             );

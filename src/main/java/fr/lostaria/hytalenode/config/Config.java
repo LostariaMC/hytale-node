@@ -7,7 +7,7 @@ import lombok.Setter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
-public class NodeConfig {
+public class Config {
 
     private boolean enable;
     private String managerUrl;

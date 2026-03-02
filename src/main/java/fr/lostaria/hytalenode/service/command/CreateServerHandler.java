@@ -1,6 +1,7 @@
 package fr.lostaria.hytalenode.service.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.lostaria.hytalenode.config.Config;
 import fr.lostaria.hytalenode.model.MessageEnvelope;
 import fr.lostaria.hytalenode.model.command.CreateServerPayload;
 
@@ -9,7 +10,13 @@ import java.util.List;
 
 public class CreateServerHandler implements MessageHandler {
 
+    private final Config config;
+
     private final ObjectMapper mapper = new ObjectMapper();
+
+    public CreateServerHandler(Config config) {
+        this.config = config;
+    }
 
     @Override
     public String type() {
@@ -47,6 +54,9 @@ public class CreateServerHandler implements MessageHandler {
 
         cmd.add("-p"); cmd.add(p.port() + ":" + p.port() + "/udp");
         cmd.add("-v"); cmd.add("/srv/resources/assets/Assets.zip:/srv/server/Assets.zip");
+
+        cmd.add("-v");
+        cmd.add(config.getDeviceToken() + ":" + config.getDeviceToken() + ":ro");
 
         cmd.add(fullImage);
 
