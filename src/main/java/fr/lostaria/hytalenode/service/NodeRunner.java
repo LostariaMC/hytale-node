@@ -71,9 +71,8 @@ public class NodeRunner implements Runnable {
             this.consumer = "node-" + nodeId;
 
             LOGGER.info(
-                    "REGISTERED nodeId={} consumer={} ip={} portStart={} portEnd={}",
+                    "REGISTERED nodeId={} ip={} portStart={} portEnd={}",
                     nodeId,
-                    consumer,
                     node.ip(),
                     node.portRangeStart(),
                     node.portRangeEnd()
