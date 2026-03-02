@@ -30,10 +30,6 @@ public class ManagerClient {
         URI uri = URI.create(baseUrl + "/nodes");
         String json = mapper.writeValueAsString(req);
 
-        System.out.println(uri);
-        System.out.println(json);
-        System.out.println(jwt);
-
         HttpRequest httpReq = HttpRequest.newBuilder()
                 .uri(uri)
                 .timeout(Duration.ofSeconds(10))
