@@ -4,11 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.lostaria.hytalenode.config.Config;
 import fr.lostaria.hytalenode.model.MessageEnvelope;
 import fr.lostaria.hytalenode.model.command.CreateServerPayload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CreateServerHandler implements MessageHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CreateServerHandler.class);
 
     private final Config config;
 
@@ -28,15 +32,17 @@ public class CreateServerHandler implements MessageHandler {
         CreateServerPayload p =
                 mapper.treeToValue(message.payload(), CreateServerPayload.class);
 
-        new ProcessBuilder(
-                "sudo",
-                "/usr/sbin/ufw",
-                "allow",
-                p.port() + "/udp"
-        ).inheritIO().start().waitFor();
-
         String fullImage = "ghcr.io/lostariamc/" + p.image() + ":prod";
         String containerName = "hytale-" + p.serverId();
+
+        LOGGER.info("CREATE_SERVER serverId={} image={} port={}", p.serverId(), fullImage, p.port());
+
+        CommandRunner.Result ufw = CommandRunner.run(List.of("sudo", "/usr/sbin/ufw", "allow", p.port() + "/udp"));
+        if (ufw.ok()) {
+            LOGGER.info("FIREWALL opened port={}/udp ({})", p.port(), ufw.output().replace('\n', ' '));
+        } else {
+            LOGGER.warn("FIREWALL open failed port={}/udp exit={} output={}", p.port(), ufw.exitCode(), ufw.output());
+        }
 
         List<String> cmd = new ArrayList<>();
         cmd.add("docker");
@@ -60,8 +66,23 @@ public class CreateServerHandler implements MessageHandler {
 
         cmd.add(fullImage);
 
-        new ProcessBuilder(cmd)
-                .inheritIO()
-                .start();
+        CommandRunner.Result docker = CommandRunner.run(cmd);
+
+        if (!docker.ok()) {
+            LOGGER.error("CONTAINER start failed name={} exit={} output={}", containerName, docker.exitCode(), docker.output());
+
+            CommandRunner.Result rollback = CommandRunner.run(List.of("sudo", "/usr/sbin/ufw", "delete", "allow", p.port() + "/udp"));
+            LOGGER.info("FIREWALL closed port={}/udp after failed start (exit={})", p.port(), rollback.exitCode());
+
+            throw new IllegalStateException("docker run failed for " + containerName);
+        }
+
+        String containerId = docker.lastLine();
+        LOGGER.info(
+                "CONTAINER started name={} id={} in {} ms",
+                containerName,
+                containerId.substring(0, Math.min(12, containerId.length())),
+                docker.durationMs()
+        );
     }
 }

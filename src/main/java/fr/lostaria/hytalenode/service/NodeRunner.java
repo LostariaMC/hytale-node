@@ -3,9 +3,10 @@ package fr.lostaria.hytalenode.service;
 import fr.lostaria.hytalenode.config.Config;
 import fr.lostaria.hytalenode.http.AuthClient;
 import fr.lostaria.hytalenode.http.ManagerClient;
-import fr.lostaria.hytalenode.http.PubsubClient;
 import fr.lostaria.hytalenode.http.UnauthorizedException;
+import fr.lostaria.hytalenode.model.MessageEnvelope;
 import fr.lostaria.hytalenode.model.RegisterNodeRequest;
+import fr.lostaria.hytalenode.pubsub.PubsubClient;
 import fr.lostaria.hytalenode.service.command.CreateServerHandler;
 import fr.lostaria.hytalenode.service.command.DeleteServerHandler;
 import fr.lostaria.hytalenode.service.command.MessageRouter;
@@ -13,11 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static fr.lostaria.hytalenode.utils.HttpUtils.clamp;
 
 public class NodeRunner implements Runnable {
 
@@ -33,6 +33,8 @@ public class NodeRunner implements Runnable {
         t.setDaemon(true);
         return t;
     });
+
+    private final ExecutorService commandExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "node-commands"));
 
     private volatile String jwt;
     private volatile String nodeId;
@@ -86,16 +88,11 @@ public class NodeRunner implements Runnable {
             );
 
             long backoffMs = 250;
-            int timeout = clamp(25, 1, 30);
 
             while (true) {
+                long connectedAt = System.currentTimeMillis();
                 try {
-                    var msg = pubsubClient.pollMessage(consumer, timeout, jwt);
-                    if (msg != null) {
-                        LOGGER.info("MESSAGE type={} producer={}", msg.type(), msg.producer());
-                        router.route(msg);
-                    }
-                    backoffMs = 250;
+                    pubsubClient.listen(consumer, jwt, msg -> commandExecutor.execute(() -> handle(router, msg)));
 
                 } catch (UnauthorizedException e) {
                     LOGGER.warn("Unauthorized, refreshing JWT...");
@@ -103,21 +100,33 @@ public class NodeRunner implements Runnable {
                         refreshJwtOrThrow();
                     } catch (Exception refreshErr) {
                         LOGGER.error("JWT refresh after 401 failed: {}", refreshErr.toString());
-                        sleep(backoffMs);
-                        backoffMs = Math.min(backoffMs * 2, 5000);
                     }
 
                 } catch (Exception e) {
-                    LOGGER.warn("Poll error: {}", e.toString());
-                    sleep(backoffMs);
-                    backoffMs = Math.min(backoffMs * 2, 5000);
+                    LOGGER.warn("Pubsub error: {}", e.toString());
                 }
+
+                if (System.currentTimeMillis() - connectedAt > 30_000) {
+                    backoffMs = 250;
+                }
+                sleep(backoffMs);
+                backoffMs = Math.min(backoffMs * 2, 5000);
             }
 
         } catch (Exception e) {
             LOGGER.error("Runner fatal: {}", e.toString());
         } finally {
             scheduler.shutdownNow();
+            commandExecutor.shutdownNow();
+        }
+    }
+
+    private void handle(MessageRouter router, MessageEnvelope msg) {
+        LOGGER.info("MESSAGE type={} producer={}", msg.type(), msg.producer());
+        try {
+            router.route(msg);
+        } catch (Exception e) {
+            LOGGER.error("Handler error type={}: {}", msg.type(), e.toString());
         }
     }
 

@@ -7,7 +7,9 @@ public final class HttpUtils {
         return s.endsWith("/") ? s.substring(0, s.length() - 1) : s;
     }
 
-    public static int clamp(int v, int min, int max) {
-        return Math.max(min, Math.min(max, v));
+    public static String toWebSocketUrl(String url) {
+        if (url.startsWith("https://")) return "wss://" + url.substring("https://".length());
+        if (url.startsWith("http://")) return "ws://" + url.substring("http://".length());
+        return url;
     }
 }
