@@ -6,5 +6,6 @@
   "deviceToken": "/etc/hytalenode/device.token",
   "currentHostIp": "127.0.0.1",
   "portRangeStart": 5521,
-  "portRangeEnd": 5699
+  "portRangeEnd": 5699,
+  "logsPath": "/srv/logs/servers"
 }

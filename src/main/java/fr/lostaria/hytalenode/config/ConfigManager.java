@@ -63,6 +63,7 @@ public class ConfigManager {
             if (cfg.getPubsubUrl() == null) cfg.setPubsubUrl("");
             if (cfg.getDeviceToken() == null) cfg.setDeviceToken("");
             if (cfg.getCurrentHostIp() == null) cfg.setCurrentHostIp("127.0.0.1");
+            if (cfg.getLogsPath() == null) cfg.setLogsPath("");
 
             return cfg;
         } catch (IOException e) {

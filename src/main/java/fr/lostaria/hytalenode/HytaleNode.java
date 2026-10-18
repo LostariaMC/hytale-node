@@ -28,11 +28,12 @@ public class HytaleNode {
                 || config.getPubsubUrl().isBlank()
                 || config.getDeviceToken().isBlank()
                 || config.getPortRangeStart() <= 0
-                || config.getPortRangeEnd() <= 0) {
+                || config.getPortRangeEnd() <= 0
+                || config.getLogsPath().isBlank()) {
 
             LOGGER.error(
                     "STATUS=ERROR Missing managerUrl or authUrl or pubsubUrl or deviceToken "
-                            + "or portRangeStart or portRangeEnd in config. "
+                            + "or portRangeStart or portRangeEnd or logsPath in config. "
                             + "Fix config.json."
             );
             return;

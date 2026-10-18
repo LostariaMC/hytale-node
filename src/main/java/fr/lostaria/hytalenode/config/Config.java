@@ -17,5 +17,6 @@ public class Config {
     private String currentHostIp;
     private int portRangeStart;
     private int portRangeEnd;
+    private String logsPath;
 
 }

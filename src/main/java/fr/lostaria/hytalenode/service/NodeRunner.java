@@ -80,9 +80,12 @@ public class NodeRunner implements Runnable {
                     node.portRangeEnd()
             );
 
+            var logsArchiver = new ServerLogsArchiver(config.getLogsPath());
+            logsArchiver.archiveStopped();
+
             var router = new MessageRouter(
                     List.of(
-                            new CreateServerHandler(config),
+                            new CreateServerHandler(config, logsArchiver),
                             new DeleteServerHandler()
                     )
             );
